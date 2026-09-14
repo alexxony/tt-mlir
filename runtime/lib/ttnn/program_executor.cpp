@@ -132,6 +132,7 @@
 #include "operations/ttml/layernorm_fw.h"
 #include "operations/ttml/sdpa_bw.h"
 #include "operations/ttml/sdpa_fw.h"
+#include "operations/ttml/swiglu_elemwise_bw.h"
 #include "tt/runtime/debug.h"
 #include "tt/runtime/detail/ttnn/types/types.h"
 #include "tt/runtime/detail/ttnn/utils.h"
@@ -656,6 +657,10 @@ void ProgramExecutor::runOperation(const ::tt::target::ttnn::Operation *op) {
   }
   case ::tt::target::ttnn::OpType::SDPABackwardOp: {
     return operations::ttml::run(op->type_as_SDPABackwardOp(), getContext());
+  }
+  case ::tt::target::ttnn::OpType::SwigluElemwiseBackwardOp: {
+    return operations::ttml::run(op->type_as_SwigluElemwiseBackwardOp(),
+                                 getContext());
   }
   case ::tt::target::ttnn::OpType::LayerNormForwardOp: {
     return operations::ttml::run(op->type_as_LayerNormForwardOp(),

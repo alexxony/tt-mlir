@@ -121,13 +121,14 @@ struct TTIRToTTIRDecompositionPass
       return op.getParam().getType().getRank() == 4;
     });
 
-    // Decompose SDPA, layer norm, and cross-entropy composites when their
-    // tensor ranks or shapes are unsupported by ttml::metal.
+    // Decompose SDPA, layer norm, swiglu and cross-entropy composites when
+    // their tensor ranks or shapes are unsupported by ttml::metal.
     target.addDynamicallyLegalOp<ttcore::CompositeOp>(
         [&](ttcore::CompositeOp op) {
           if (op.getCompositeName() == "sdpa_fw" ||
               op.getCompositeName() == "sdpa_bw" ||
-              op.getCompositeName() == "layernorm_fw") {
+              op.getCompositeName() == "layernorm_fw" ||
+              op.getCompositeName() == "swiglu_elemwise_bw") {
             bool operandsRank4 = llvm::all_of(op.getInputs(), [&](Value input) {
               return cast<RankedTensorType>(input.getType()).getRank() == 4;
             });

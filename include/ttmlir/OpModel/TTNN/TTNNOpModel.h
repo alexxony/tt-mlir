@@ -2432,6 +2432,27 @@ struct OpModel<SDPABackwardOp> {
 };
 
 //===----------------------------------------------------------------------===//
+// SwigluElemwiseBackwardOp
+//===----------------------------------------------------------------------===//
+
+template <>
+struct OpModel<SwigluElemwiseBackwardOp> {
+  static llvm::Expected<OpConstraints>
+  getOpConstraints(llvm::ArrayRef<int64_t> inputShape,
+                   TTNNLayoutAttr inputLayout,
+                   llvm::ArrayRef<int64_t> gateShape, TTNNLayoutAttr gateLayout,
+                   llvm::ArrayRef<int64_t> gradOutputShape,
+                   TTNNLayoutAttr gradOutputLayout, TTNNLayoutAttr outputLayout,
+                   const MockAllocatorState *initialState = nullptr);
+
+  static llvm::Expected<size_t>
+  getOpRuntime(llvm::ArrayRef<int64_t> inputShape, TTNNLayoutAttr inputLayout,
+               llvm::ArrayRef<int64_t> gateShape, TTNNLayoutAttr gateLayout,
+               llvm::ArrayRef<int64_t> gradOutputShape,
+               TTNNLayoutAttr gradOutputLayout, TTNNLayoutAttr outputLayout);
+};
+
+//===----------------------------------------------------------------------===//
 // LayerNormForwardOp
 //===----------------------------------------------------------------------===//
 

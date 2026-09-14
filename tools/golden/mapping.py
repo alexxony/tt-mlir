@@ -6608,6 +6608,27 @@ def stablehlo_convert_golden(
     return input_tensor.to(output_dtype)
 
 
+def ttcore_composite_golden(
+    *operand_tensors: GoldenMapTensor,
+    composite_name=None,
+    composite_attributes=None,
+    result_types=None,
+    **_kwargs,
+) -> Union[GoldenMapTensor, Tuple[GoldenMapTensor, ...]]:
+    if composite_name == "swiglu_elemwise_bw":
+        if not result_types:
+            raise ValueError("ttcore.composite golden requires result types.")
+
+        return swiglu_elemwise_bw_golden(
+            *operand_tensors,
+            output_type_mlir=RankedTensorType(result_types[0]).element_type,
+        )
+
+    raise NotImplementedError(
+        f"No ttcore.composite golden is registered for {composite_name!r}."
+    )
+
+
 def stablehlo_composite_golden(
     *operand_tensors: GoldenMapTensor,
     decomposition_fn=None,
@@ -8807,6 +8828,34 @@ def sdpa_bw_golden(
     return dq.to(query.dtype), dk.to(key.dtype), dv.to(value.dtype)
 
 
+def swiglu_elemwise_bw_golden(
+    input: GoldenMapTensor,
+    gate: GoldenMapTensor,
+    grad_output: GoldenMapTensor,
+    output_type_mlir: Type = None,
+    **kwargs,
+) -> Tuple[GoldenMapTensor, GoldenMapTensor]:
+    # Backward of output = gate * silu(input), where silu(x) = x * sigmoid(x).
+    x = input.float()
+    sigmoid = torch.sigmoid(x)
+    silu = torch.mul(x, sigmoid)
+    # silu'(x) = sigmoid(x) * (1 + x * (1 - sigmoid(x)))
+    silu_grad = torch.mul(
+        sigmoid,
+        torch.add(torch.mul(x, torch.sub(1.0, sigmoid)), 1.0),
+    )
+
+    grad_input = torch.mul(torch.mul(grad_output.float(), gate.float()), silu_grad)
+    grad_gate = torch.mul(grad_output.float(), silu)
+
+    output_dtype = (
+        mlir_type_to_torch_dtype(output_type_mlir)
+        if output_type_mlir is not None
+        else input.dtype
+    )
+    return grad_input.to(output_dtype), grad_gate.to(output_dtype)
+
+
 def layernorm_fw_golden(
     input: GoldenMapTensor,
     weight: GoldenMapTensor,
@@ -9209,6 +9258,8 @@ def debug_region_end_golden(
 
 
 GOLDEN_MAPPINGS: Dict[type, Callable] = {
+    # ----- TTCORE OPS -----
+    ttcore.CompositeOp: ttcore_composite_golden,
     # ----- TTIR OPS -----
     # Elementwise unary operations
     ttir.GetDimensionSizeOp: get_dimension_size_golden,

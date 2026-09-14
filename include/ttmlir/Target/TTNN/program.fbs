@@ -149,6 +149,7 @@ union OpType {
   SoftmaxOp,
   SortOp,
   SplitQueryKeyValueAndSplitHeadsOp,
+  SwigluElemwiseBackwardOp,
   ToDeviceOp,
   ToLayoutOp,
   ToMemoryConfigOp,
