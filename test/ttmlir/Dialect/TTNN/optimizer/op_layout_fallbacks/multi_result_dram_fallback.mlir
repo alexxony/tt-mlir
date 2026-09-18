@@ -1,3 +1,4 @@
+// REQUIRES: opmodel
 // RUN: ttmlir-opt --ttcore-register-device --ttcore-mark-functions-as-forward --ttnn-greedy-memory-layout-propagation %s --mlir-print-local-scope -o %t.mlir
 // RUN: FileCheck %s --input-file %t.mlir
 
